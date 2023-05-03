@@ -1,5 +1,8 @@
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
 
+// https://crates.io/crates/lambda_runtime
+// https://github.com/cargo-lambda/cargo-lambda/issues/397
+
 /// This is the main body for the function.
 /// Write your code inside it.
 /// There are some code example in the following URLs:
@@ -11,6 +14,8 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         .and_then(|params| params.first("name"))
         .unwrap_or("world");
     let message = format!("Hello {who}, this is an AWS Lambda HTTP request");
+
+    println!("Hello, My Name is Buriburi-zaemon!!!");
 
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime

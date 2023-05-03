@@ -1,8 +1,11 @@
+import path from "path";
 import { Stack, StackProps, aws_apigateway as apigw } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { RustFunction } from "cargo-lambda-cdk";
 
 const getEnv = () => process.env.NODE_ENV ?? "dev";
+
+const packageName = "backlog-mention-notifier";
 
 export class BacklogMentionNotifierStack extends Stack {
 	constructor(scope: Construct, id: string, props?: StackProps) {
@@ -10,10 +13,12 @@ export class BacklogMentionNotifierStack extends Stack {
 
 		const backlogMentionNotifierFunction = new RustFunction(
 			this,
-			`backlog-mention-notifier-${getEnv()}`,
+			// https://github.com/cargo-lambda/cargo-lambda-cdk/issues/10
+			// `backlog-mention-notifier-${getEnv()}`,
+			packageName,
 			{
 				//manifestPath: "./Cargo.toml",
-				manifestPath: "./Cargo.toml",
+				manifestPath: path.join(__dirname, "..", ".."),
 				bundling: {
 					environment: {},
 				},
@@ -31,18 +36,21 @@ export class BacklogMentionNotifierStack extends Stack {
 		const slackResource = restApi.root.addResource("slack");
 		slackResource.addMethod(
 			"POST",
-			new apigw.LambdaIntegration(backlogMentionNotifierFunction, {
-				// NOTE: Lambda を非同期で呼び出す.
-				proxy: false,
-				requestParameters: {
-					"integration.request.header.X-Amz-Invocation-Type": "'Event'",
-				},
-				integrationResponses: [{ statusCode: "200" }],
-			}),
-			{
-				// Lambdaを非同期で呼び出した場合のステータスコードは202になるので合わせる
-				methodResponses: [{ statusCode: "202" }],
-			},
+			// ちょっとうまくいかないので、同期呼び出して確認してみる。
+			new apigw.LambdaIntegration(backlogMentionNotifierFunction),
+
+			//new apigw.LambdaIntegration(backlogMentionNotifierFunction, {
+			//	// NOTE: Lambda を非同期で呼び出す.
+			//	proxy: false,
+			//	requestParameters: {
+			//		"integration.request.header.X-Amz-Invocation-Type": "'Event'",
+			//	},
+			//	integrationResponses: [{ statusCode: "200" }],
+			//}),
+			//{
+			//	// Lambdaを非同期で呼び出した場合のステータスコードは202になるので合わせる
+			//	methodResponses: [{ statusCode: "202" }],
+			//},
 		);
 	}
 }
