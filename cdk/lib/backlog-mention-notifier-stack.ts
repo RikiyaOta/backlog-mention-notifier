@@ -12,6 +12,7 @@ export class BacklogMentionNotifierStack extends Stack {
 			this,
 			`backlog-mention-notifier-${getEnv()}`,
 			{
+				//manifestPath: "./Cargo.toml",
 				manifestPath: "./Cargo.toml",
 				bundling: {
 					environment: {},
