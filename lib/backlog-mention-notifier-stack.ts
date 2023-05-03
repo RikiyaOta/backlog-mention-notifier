@@ -19,8 +19,7 @@ export class BacklogMentionNotifierStack extends Stack {
 			},
 		);
 
-		const nameRestApi = "Rest API with Lambda auth";
-		const restApi = new apigw.RestApi(this, nameRestApi, {
+		const restApi = new apigw.RestApi(this, "backlog-mention-notifier-api", {
 			restApiName: `backlog-mention-notifier-${getEnv()}`,
 			deployOptions: {
 				stageName: getEnv(),
