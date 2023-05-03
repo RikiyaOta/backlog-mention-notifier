@@ -7,7 +7,7 @@ export class BacklogMentionNotifierStack extends cdk.Stack {
     super(scope, id, props);
 
     new RustFunction(this, 'backlog-mention-notifier', {
-      manifestPath: '../Cargo.toml',
+      manifestPath: './Cargo.toml',
       bundling: {
         environment: {}
       }
