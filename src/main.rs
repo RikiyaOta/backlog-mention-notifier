@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 // https://github.com/cargo-lambda/cargo-lambda/issues/397
 
 #[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
 struct BacklogProject {
     projectKey: String,
     name: String,
@@ -19,15 +20,53 @@ struct BacklogComment {
 #[derive(Deserialize, Serialize, Debug)]
 struct BacklogCommentAddedContent {
     key_id: u32,
+    summary: String,
     comment: BacklogComment,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct BacklogCommentAddedWebhookPayload {
+struct BacklogIssueRelatedWebhookPayload {
     id: u32,
     project: BacklogProject,
     r#type: u8,
-    content: BacklogCommentAddedContent
+    content: BacklogCommentAddedContent,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct CommentedIssue {
+    project_key: String,
+    issue_key: u32,
+    issue_subject: String,
+    // TODO: ↓何が扱いやすいかな。ID？
+    notified_backlog_users: Vec<String>,
+    comment: String,
+}
+
+fn is_commented_event(payload: &BacklogIssueRelatedWebhookPayload) -> bool {
+    payload.r#type == 3
+}
+
+fn parse_webhook_payload(event: &Request) -> Result<CommentedIssue, String> {
+    match event.payload::<BacklogIssueRelatedWebhookPayload>() {
+        Ok(payload) => match payload {
+            None => Err("Payload is None.".to_string()),
+            Some(payload) => {
+                if is_commented_event(&payload) {
+                    Ok(CommentedIssue {
+                        project_key: payload.project.projectKey,
+                        issue_key: payload.content.key_id,
+                        issue_subject: payload.content.summary,
+                        // TODO: Parse notified users.
+                        notified_backlog_users: vec![],
+                        comment: payload.content.comment.content,
+                    })
+                } else {
+                    Err("This payload is not commented-event.".to_string())
+                }
+            }
+        },
+        Err(error) => Err(error.to_string()),
+    }
 }
 
 /// This is the main body for the function.
@@ -42,14 +81,10 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     // 4. Extract mentioned users.
     // 5. Decide the users' slack account id.
     // 6. Post DMs to the users.
-    match event.payload::<BacklogCommentAddedWebhookPayload>() {
-        Ok(payload) => match payload {
-            None => println!("Payload is None!!!"),
-            Some(payload) => println!("Payload is {:?}", payload),
-        },
-        Err(error) => {
-            println!("PayloadError is {:?}", error);
-        }
+
+    match parse_webhook_payload(&event) {
+        Ok(payload) => println!("Payload: {:?}", payload),
+        Err(error_message) => println!("Error: {}", error_message),
     }
 
     // Extract some useful information from the request
