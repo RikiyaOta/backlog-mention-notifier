@@ -1,4 +1,5 @@
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, RequestPayloadExt, Response};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 // https://crates.io/crates/lambda_runtime
@@ -9,6 +10,16 @@ use serde::{Deserialize, Serialize};
 struct BacklogProject {
     projectKey: String,
     name: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct BacklogUser {
+    name: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct BacklogNotification {
+    user: BacklogUser,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -30,6 +41,7 @@ struct BacklogIssueRelatedWebhookPayload {
     project: BacklogProject,
     r#type: u8,
     content: BacklogCommentAddedContent,
+    notifications: Vec<BacklogNotification>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -46,19 +58,38 @@ fn is_commented_event(payload: &BacklogIssueRelatedWebhookPayload) -> bool {
     payload.r#type == 3
 }
 
+/*
+ * 注意：コメントの文章の中に、ただの文字としてメンションの情報が入っている。
+ * また、ユーザー名の後に空白等が入っているとも限らない。"@RikiyaOtaホゲ" もありえる。
+ * なので、あらかじめユーザー名を保持しておいて、その情報をもとに Regex を組み立ててサーチする必要がある。
+ */
+fn extract_backlog_user_names(comment: &String) -> Vec<String> {
+    let backlog_user_names = vec!["RikiyaOta", "Test1", "Test2"];
+
+    backlog_user_names
+        .iter()
+        .filter(|backlog_user_name| {
+            let regex = Regex::new(&format!("@{}", backlog_user_name)).unwrap();
+            regex.is_match(&comment)
+        })
+        .map(|s| s.to_string())
+        .collect()
+}
+
 fn parse_webhook_payload(event: &Request) -> Result<CommentedIssue, String> {
     match event.payload::<BacklogIssueRelatedWebhookPayload>() {
         Ok(payload) => match payload {
             None => Err("Payload is None.".to_string()),
             Some(payload) => {
                 if is_commented_event(&payload) {
+                    let comment = payload.content.comment.content;
                     Ok(CommentedIssue {
                         project_key: payload.project.projectKey,
                         issue_key: payload.content.key_id,
                         issue_subject: payload.content.summary,
                         // TODO: Parse notified users.
-                        notified_backlog_users: vec![],
-                        comment: payload.content.comment.content,
+                        notified_backlog_users: extract_backlog_user_names(&comment),
+                        comment,
                     })
                 } else {
                     Err("This payload is not commented-event.".to_string())
