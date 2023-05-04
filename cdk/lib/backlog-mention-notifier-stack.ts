@@ -1,11 +1,36 @@
 import path from "path";
 import { Stack, StackProps, aws_apigateway as apigw } from "aws-cdk-lib";
+import {
+	PolicyDocument,
+	PolicyStatement,
+	Effect,
+	AnyPrincipal,
+} from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { RustFunction } from "cargo-lambda-cdk";
 
 const getEnv = () => process.env.NODE_ENV ?? "dev";
 
-const packageName = "backlog-mention-notifier";
+const packageName = "backlog-mention-notifier" as const;
+
+const BACKLOG_WEBHOOK_SOURCE_IP_ADDRESSES = [
+	"54.64.128.240/32",
+	"54.178.233.194/32",
+	"13.112.1.142/32",
+	"13.112.147.36/32",
+	"54.238.175.47/32",
+	"54.168.25.33/32",
+	"52.192.156.153/32",
+	"54.178.230.204/32",
+	"52.197.88.78/32",
+	"13.112.137.175/32",
+	"34.211.15.3/32",
+	"35.160.57.23/32",
+	"54.68.48.106/32",
+	"52.88.47.69/32",
+	"52.68.247.253/32",
+	"18.182.251.152/32",
+] as const;
 
 export class BacklogMentionNotifierStack extends Stack {
 	constructor(scope: Construct, id: string, props?: StackProps) {
@@ -13,8 +38,7 @@ export class BacklogMentionNotifierStack extends Stack {
 
 		const backlogMentionNotifierFunction = new RustFunction(
 			this,
-			// https://github.com/cargo-lambda/cargo-lambda-cdk/issues/10
-			// `backlog-mention-notifier-${getEnv()}`,
+			// ATTENTION: https://github.com/cargo-lambda/cargo-lambda-cdk/issues/10
 			packageName,
 			{
 				//manifestPath: "./Cargo.toml",
@@ -25,11 +49,41 @@ export class BacklogMentionNotifierStack extends Stack {
 			},
 		);
 
+		const resourcePolicy = new PolicyDocument({
+			statements: [
+				new PolicyStatement({
+					effect: Effect.ALLOW,
+					actions: ["execute-api:Invoke"],
+					principals: [new AnyPrincipal()],
+					resources: ["execute-api:/*/*/*"],
+				}),
+				new PolicyStatement({
+					effect: Effect.DENY,
+					actions: ["execute-api:Invoke"],
+					principals: [new AnyPrincipal()],
+					resources: ["execute-api:/*/*/*"],
+					conditions: {
+						NotIpAddress: {
+							"aws:SourceIp": BACKLOG_WEBHOOK_SOURCE_IP_ADDRESSES,
+						},
+					},
+				}),
+			],
+		});
+
 		const restApi = new apigw.RestApi(this, "backlog-mention-notifier-api", {
 			restApiName: `backlog-mention-notifier-${getEnv()}`,
 			deployOptions: {
 				stageName: getEnv(),
-				// TODO: Restrict source IP addresses.
+			},
+			policy: resourcePolicy,
+		});
+
+		restApi.addGatewayResponse("backlog-mention-notifier-gateway-response", {
+			type: apigw.ResponseType.ACCESS_DENIED,
+			templates: {
+				"application/json":
+					'{"statusCode": "403", "type": "$context.error.responseType"}',
 			},
 		});
 
