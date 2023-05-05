@@ -2,8 +2,8 @@
   "slack_bot_oauth_token": "xxxxx",
   "user_account_mapping": [
     {
-      "backlog_user_name": "RikiyaOta",
-      "slack_user_id": "123456"
+      "backlog_user_name": "Test1",
+      "slack_user_id": "123"
     },
     {
       "backlog_user_name": "Test2",
