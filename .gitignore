@@ -9,5 +9,5 @@ cdk.out
 
 # Cargo
 target/
-config/
+config/*
 !config/config.development.sample.json
