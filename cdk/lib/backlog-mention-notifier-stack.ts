@@ -9,7 +9,7 @@ import {
 import { Construct } from "constructs";
 import { RustFunction } from "cargo-lambda-cdk";
 
-const getEnv = () => process.env.NODE_ENV ?? "dev";
+const getEnv = () => process.env.NODE_ENV ?? "development";
 
 const packageName = "backlog-mention-notifier" as const;
 
@@ -44,6 +44,17 @@ export class BacklogMentionNotifierStack extends Stack {
 				//manifestPath: "./Cargo.toml",
 				manifestPath: path.join(__dirname, "..", ".."),
 				bundling: {
+					commandHooks: {
+						beforeBundling(inputDir: string, outputDir: string) {
+							return [
+								`mkdir -p ${outputDir}/config/`,
+								`cp config/config.${getEnv()}.json ${outputDir}/config/`,
+							];
+						},
+						afterBundling(_inputDir: string, _outputDir: string): string[] {
+							return [];
+						},
+					},
 					environment: {},
 				},
 			},
