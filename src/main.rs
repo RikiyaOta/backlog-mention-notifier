@@ -1,3 +1,5 @@
+pub mod account_mapping;
+
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, RequestPayloadExt, Response};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -117,6 +119,10 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         Ok(payload) => println!("Payload: {:?}", payload),
         Err(error_message) => println!("Error: {}", error_message),
     }
+    
+    // DEBUG:
+    let app_config = account_mapping::get_app_config();
+    println!("App Config: {:?}", app_config);
 
     // Extract some useful information from the request
     let who = event
