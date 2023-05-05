@@ -1,5 +1,6 @@
 import path from "path";
 import { Stack, StackProps, aws_apigateway as apigw } from "aws-cdk-lib";
+import * as logs from "aws-cdk-lib/aws-logs";
 import {
 	PolicyDocument,
 	PolicyStatement,
@@ -57,6 +58,7 @@ export class BacklogMentionNotifierStack extends Stack {
 					},
 					environment: {},
 				},
+				logRetention: logs.RetentionDays.THREE_DAYS,
 			},
 		);
 
