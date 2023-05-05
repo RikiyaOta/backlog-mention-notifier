@@ -44,11 +44,11 @@ struct BacklogIssueRelatedWebhookPayload {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CommentedIssue {
-    project_key: String,
-    issue_key: u32,
-    issue_subject: String,
+    pub project_key: String,
+    pub issue_key: u32,
+    pub issue_subject: String,
     pub notified_backlog_user_names: Vec<String>,
-    comment: String,
+    pub comment: String,
 }
 
 fn is_commented_event(payload: &BacklogIssueRelatedWebhookPayload) -> bool {
