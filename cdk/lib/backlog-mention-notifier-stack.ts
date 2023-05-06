@@ -43,7 +43,6 @@ export class BacklogMentionNotifierStack extends Stack {
 			// ATTENTION: https://github.com/cargo-lambda/cargo-lambda-cdk/issues/10
 			packageName,
 			{
-				//manifestPath: "./Cargo.toml",
 				manifestPath: path.join(__dirname, "..", ".."),
 				bundling: {
 					commandHooks: {
@@ -57,7 +56,6 @@ export class BacklogMentionNotifierStack extends Stack {
 							return [];
 						},
 					},
-					environment: {},
 					architecture: lambda.Architecture.ARM_64,
 				},
 				logRetention: logs.RetentionDays.THREE_DAYS,

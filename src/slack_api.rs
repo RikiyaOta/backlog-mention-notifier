@@ -2,6 +2,7 @@ use crate::app_config::AppConfig;
 use crate::backlog_webhook_parser::CommentedIssue;
 use reqwest;
 use serde::Serialize;
+use tracing::debug;
 
 #[derive(Debug, Serialize)]
 struct SlackMessageBlockSectionText {
@@ -101,7 +102,7 @@ pub async fn post_direct_message(
     commented_issue: &CommentedIssue,
 ) -> Result<String, String> {
     let body = build_request_body(app_config, slack_user_id, commented_issue);
-    println!("Request Body: {:?}", body);
+    debug!("Request Body: {:?}", body);
     let client = reqwest::Client::new();
 
     let result = client
