@@ -1,4 +1,5 @@
-use crate::account_mapping::{get_backlog_users, AppConfig};
+use crate::account_mapping::get_backlog_users;
+use crate::app_config::AppConfig;
 use lambda_http::{Request, RequestPayloadExt};
 use regex::Regex;
 use serde::{Deserialize, Serialize};

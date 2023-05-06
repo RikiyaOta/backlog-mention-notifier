@@ -1,4 +1,5 @@
-use crate::{account_mapping::AppConfig, backlog_webhook_parser::CommentedIssue};
+use crate::app_config::AppConfig;
+use crate::backlog_webhook_parser::CommentedIssue;
 use reqwest;
 use serde::Serialize;
 
