@@ -14,6 +14,7 @@ pub struct UserAccountMapping {
 pub struct AppConfig {
     pub slack_bot_oauth_token: String,
     pub user_account_mapping: Vec<UserAccountMapping>,
+    pub backlog_space_id: String,
 }
 
 impl From<config::Config> for AppConfig {
@@ -21,6 +22,7 @@ impl From<config::Config> for AppConfig {
         Self {
             slack_bot_oauth_token: value.get("slack_bot_oauth_token").unwrap(),
             user_account_mapping: value.get("user_account_mapping").unwrap(),
+            backlog_space_id: value.get("backlog_space_id").unwrap(),
         }
     }
 }
