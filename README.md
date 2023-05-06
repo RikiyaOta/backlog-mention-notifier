@@ -1,14 +1,15 @@
-# Welcome to your CDK TypeScript project
+# Backlog Mention Notifier
 
-This is a blank project for CDK development with TypeScript.
+Backlog のメンション付きメッセージを Slack の DM に通知します。
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## 本番デプロイ
 
-## Useful commands
+- `config/config.prod.json`を用意する。
+- `$ npm run deploy:prod`を実行する。
+    - 注意：AWS 認証情報の設定は各自にお任せします。
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+## 注意
+
+- `config/config.{ENV}.json`の`user_account_mapping`に記載のあるユーザーのみが対象です。
+- Backlog ユーザー名は、メンションをつけるときに使われる名前です。
+- Slack ユーザー ID は[こちら](https://slack.com/intl/ja-jp/help/articles/360003827751-%E3%83%A1%E3%83%B3%E3%83%90%E3%83%BC%E3%81%AE%E3%83%97%E3%83%AD%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%81%B8%E3%81%AE%E3%83%AA%E3%83%B3%E3%82%AF%E3%82%92%E4%BD%9C%E6%88%90%E3%81%99%E3%82%8B-)を参考にして確認してください。
