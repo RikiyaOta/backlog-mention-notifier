@@ -1,6 +1,6 @@
 import path from "path";
 import { Stack, StackProps, aws_apigateway as apigw } from "aws-cdk-lib";
-import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as logs from "aws-cdk-lib/aws-logs";
 import {
 	PolicyDocument,
@@ -11,7 +11,7 @@ import {
 import { Construct } from "constructs";
 import { RustFunction } from "cargo-lambda-cdk";
 
-const getEnv = () => process.env.NODE_ENV ?? "development";
+const getEnv = () => process.env.NODE_ENV ?? "dev";
 
 const packageName = "backlog-mention-notifier" as const;
 
@@ -38,6 +38,8 @@ export class BacklogMentionNotifierStack extends Stack {
 	constructor(scope: Construct, id: string, props?: StackProps) {
 		super(scope, id, props);
 
+		const configFilePath = `config/config.${getEnv()}.json`;
+
 		const backlogMentionNotifierFunction = new RustFunction(
 			this,
 			// ATTENTION: https://github.com/cargo-lambda/cargo-lambda-cdk/issues/10
@@ -46,9 +48,10 @@ export class BacklogMentionNotifierStack extends Stack {
 				manifestPath: path.join(__dirname, "..", ".."),
 				bundling: {
 					commandHooks: {
-						beforeBundling(inputDir: string, outputDir: string) {
+						beforeBundling(_inputDir: string, outputDir: string) {
 							return [
 								`mkdir -p ${outputDir}/config/`,
+								`if [ ! -e '${configFilePath}' ]; then echo 'Config File Not Exist: ${configFilePath}' && exit 1; fi`,
 								`cp config/config.${getEnv()}.json ${outputDir}/config/`,
 							];
 						},
@@ -57,6 +60,9 @@ export class BacklogMentionNotifierStack extends Stack {
 						},
 					},
 					architecture: lambda.Architecture.ARM_64,
+				},
+				environment: {
+					APP_ENV: getEnv(),
 				},
 				logRetention: logs.RetentionDays.THREE_DAYS,
 			},

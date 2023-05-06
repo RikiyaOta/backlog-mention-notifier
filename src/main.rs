@@ -5,7 +5,7 @@ pub mod slack_api;
 
 use app_config::AppConfig;
 use lambda_http::{run, service_fn, Body, Error, Request, Response};
-use tracing::{instrument,info,error};
+use tracing::{error, info, instrument};
 
 fn get_notified_slack_user_id(
     app_config: &AppConfig,
@@ -39,7 +39,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
                 {
                     Ok(response) => {
                         info!("Finish sending!, response={}", response);
-                    },
+                    }
                     Err(error) => error!(
                         "Failed posting a message. slack_user_id={}, error={}",
                         slack_user_id, error

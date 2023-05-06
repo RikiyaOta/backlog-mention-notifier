@@ -27,7 +27,7 @@ impl From<config::Config> for AppConfig {
 }
 
 pub fn get_app_config() -> AppConfig {
-    let app_env = env::var("APP_ENV").unwrap_or_else(|_| String::from("development"));
+    let app_env = env::var("APP_ENV").unwrap_or_else(|_| String::from("dev"));
 
     let config_filename = format!("config/config.{}.json", app_env);
 

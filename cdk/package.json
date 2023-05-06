@@ -9,7 +9,8 @@
     "format": "rome format --write .",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "deploy:dev": "NODE_ENV=dev cdk deploy",
+    "deploy:prod": "NODE_ENV=prod cdk deploy"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",
