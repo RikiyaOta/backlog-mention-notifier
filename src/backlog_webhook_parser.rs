@@ -1,4 +1,5 @@
-use crate::account_mapping::{get_backlog_users, AppConfig};
+use crate::account_mapping::get_backlog_users;
+use crate::app_config::AppConfig;
 use lambda_http::{Request, RequestPayloadExt};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -34,12 +35,14 @@ struct BacklogCommentAddedContent {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
 struct BacklogIssueRelatedWebhookPayload {
     id: u32,
     project: BacklogProject,
     r#type: u8,
     content: BacklogCommentAddedContent,
     notifications: Vec<BacklogNotification>,
+    createdUser: BacklogUser,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -48,7 +51,9 @@ pub struct CommentedIssue {
     pub issue_key: u32,
     pub issue_subject: String,
     pub notified_backlog_user_names: Vec<String>,
-    pub comment: String,
+    pub comment_id: u32,
+    pub comment_content: String,
+    pub comment_creator: String,
 }
 
 fn is_commented_event(payload: &BacklogIssueRelatedWebhookPayload) -> bool {
@@ -92,7 +97,9 @@ pub fn parse_webhook_payload(
                             &comment,
                             get_backlog_users(&app_config),
                         ),
-                        comment,
+                        comment_id: payload.content.comment.id,
+                        comment_content: comment,
+                        comment_creator: payload.createdUser.name,
                     })
                 } else {
                     Err("This payload is not commented-event.".to_string())

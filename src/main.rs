@@ -1,8 +1,9 @@
 pub mod account_mapping;
+pub mod app_config;
 pub mod backlog_webhook_parser;
 pub mod slack_api;
 
-use account_mapping::AppConfig;
+use app_config::AppConfig;
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
 
 fn get_notified_slack_user_id(
@@ -20,7 +21,7 @@ fn get_notified_slack_user_id(
 // TODO:
 // webhook に対しては即座に200を返して、別スレッドで処理をするようにしたい。
 async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
-    let app_config = account_mapping::get_app_config();
+    let app_config = app_config::get_app_config();
 
     match backlog_webhook_parser::parse_webhook_payload(&event, &app_config) {
         Err(error_message) => println!("Error: {}", error_message),

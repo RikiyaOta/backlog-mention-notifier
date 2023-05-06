@@ -1,30 +1,97 @@
-use crate::{account_mapping::AppConfig, backlog_webhook_parser::CommentedIssue};
+use crate::app_config::AppConfig;
+use crate::backlog_webhook_parser::CommentedIssue;
 use reqwest;
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
-struct SlackPostMessageBody {
-    channel: String,
-    // TODO: もっと見栄え良く！！！
+struct SlackMessageBlockSectionText {
+    r#type: String,
     text: String,
 }
 
+impl SlackMessageBlockSectionText {
+    fn new(r#type: String, text: String) -> Self {
+        Self { r#type, text }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct SlackMessageBlockSection {
+    r#type: String,
+    text: SlackMessageBlockSectionText,
+}
+
+impl SlackMessageBlockSection {
+    fn new(text_type: String, text: String) -> Self {
+        Self {
+            r#type: "section".to_string(),
+            text: SlackMessageBlockSectionText::new(text_type, text),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct SlackMessageBlockDivider {
+    r#type: String,
+}
+
+impl SlackMessageBlockDivider {
+    fn new() -> Self {
+        Self {
+            r#type: "divider".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
+enum SlackMessageBlock {
+    Section(SlackMessageBlockSection),
+    Divider(SlackMessageBlockDivider),
+}
+
+#[derive(Debug, Serialize)]
+struct SlackPostMessageBody {
+    channel: String,
+    blocks: Vec<SlackMessageBlock>,
+}
+
 fn build_request_body(
+    app_config: &AppConfig,
     slack_user_id: &String,
     commented_issue: &CommentedIssue,
 ) -> SlackPostMessageBody {
+    let blocks = vec![
+        SlackMessageBlock::Section(SlackMessageBlockSection::new(
+            "plain_text".to_string(),
+            format!(
+                ":memo: {} さんが課題にコメントしました。",
+                commented_issue.comment_creator
+            ),
+        )),
+        SlackMessageBlock::Divider(SlackMessageBlockDivider::new()),
+        SlackMessageBlock::Section(SlackMessageBlockSection::new(
+            "mrkdwn".to_string(),
+            format!(
+                "*<https://{backlog_space_id}.backlog.com/view/{project_key}-{issue_key}#comment-{comment_id}|{project_key}-{issue_key} {issue_subject}>*",
+                backlog_space_id = app_config.backlog_space_id,
+                project_key = commented_issue.project_key,
+                issue_key = commented_issue.issue_key,
+                comment_id = commented_issue.comment_id,
+                issue_subject = commented_issue.issue_subject
+            ),
+        )),
+        SlackMessageBlock::Section(
+            SlackMessageBlockSection::new(
+                "mrkdwn".to_string(),
+                commented_issue.comment_content.to_string()
+            )
+        )
+    ];
+
     SlackPostMessageBody {
         channel: slack_user_id.to_string(),
-        text: format!(
-            r#"title: {}
-        url: https://example.backlog.com/views/{}-{}
-        comment: {}
-        "#,
-            commented_issue.issue_subject,
-            commented_issue.project_key,
-            commented_issue.issue_key,
-            commented_issue.comment
-        ),
+        blocks,
     }
 }
 
@@ -33,7 +100,8 @@ pub async fn post_direct_message(
     slack_user_id: &String,
     commented_issue: &CommentedIssue,
 ) -> Result<String, String> {
-    let body = build_request_body(slack_user_id, commented_issue);
+    let body = build_request_body(app_config, slack_user_id, commented_issue);
+    println!("Request Body: {:?}", body);
     let client = reqwest::Client::new();
 
     let result = client
