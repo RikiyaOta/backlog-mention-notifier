@@ -10,4 +10,4 @@ cdk.out
 # Cargo
 target/
 config/*
-!config/config.development.sample.json
+!config/config.dev.sample.json
