@@ -9,6 +9,8 @@
     "format": "rome format --write .",
     "watch": "tsc -w",
     "test": "jest",
+    "diff:dev": "NODE_ENV=dev cdk diff",
+    "diff:prod": "NODE_ENV=prod cdk diff",
     "deploy:dev": "NODE_ENV=dev cdk deploy",
     "deploy:prod": "NODE_ENV=prod cdk deploy"
   },
